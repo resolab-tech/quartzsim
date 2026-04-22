@@ -21,7 +21,11 @@
   }
   *{box-sizing:border-box}
   html,body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-  .wrap{max-width:1200px;margin:0 auto;padding:18px}
+  .wrap{max-width:1500px;margin:0 auto;padding:18px}
+  .top-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:stretch;margin-bottom:16px}
+  .top-row .panel{margin-bottom:0;display:flex;flex-direction:column;min-width:0}
+  .top-row .plot-host{flex:1 1 auto;min-height:480px;width:100%}
+  @media (max-width:1100px){ .top-row{grid-template-columns:1fr} .top-row .plot-host{min-height:460px} }
   h1{font-size:18px;margin:0 0 4px}
   p.sub{color:var(--muted);margin:0 0 16px}
   .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:16px;box-shadow:0 1px 2px rgba(0,0,0,0.04)}
@@ -120,6 +124,9 @@
 <div class="wrap">
   <h1>27 MHz Pierce — Crystal + Load-C Transmission <span class="pill">simplified</span></h1>
   <p class="sub">Click any value in the schematic below and type a new number — the plot, metrics and derivation table all recompute instantly. No "apply" step; there's a brief green flash on each box you edit to confirm the change was accepted.</p>
+
+  <!-- ============================== TOP ROW (schematic + plot side by side) ============================== -->
+  <div class="top-row">
 
   <!-- ============================== SCHEMATIC ============================== -->
   <div class="panel">
@@ -284,7 +291,20 @@
       </span>
       <button id="btnReset" title="Restore typical 27 MHz AT-cut starting values">↺ Reset to 27 MHz nominal</button>
     </div>
+  </div>
 
+  <!-- ============================== PLOT ============================== -->
+  <div class="panel">
+    <h2>v<sub>o</sub>/v<sub>i</sub> — magnitude &amp; phase vs frequency</h2>
+    <div id="plot" class="plot-host" style="width:100%"></div>
+  </div>
+
+  </div>
+  <!-- ============================== /TOP ROW ============================== -->
+
+  <!-- ============================== KEY FREQUENCIES (full-width below) ============================== -->
+  <div class="panel">
+    <h2>Key frequencies &amp; derived values</h2>
     <div class="metrics">
       <div class="m"><div class="k">f<sub>s</sub> — motional series (X<sub>m</sub>=0)</div><div class="v" id="mFs">—</div></div>
       <div class="m"><div class="k">f<sub>r</sub> — xtal series w/ R<sub>m</sub></div><div class="v" id="mFr">—</div></div>
@@ -297,12 +317,6 @@
     </div>
 
     <p style="margin:10px 0 0;color:var(--muted);font-size:12px">Full derivation of f<sub>s</sub>, f<sub>r</sub>, f<sub>p</sub>, f<sub>L</sub> with R<sub>m</sub> included is at the bottom of this page. ↓</p>
-  </div>
-
-  <!-- ============================== PLOT ============================== -->
-  <div class="panel">
-    <h2>v<sub>o</sub>/v<sub>i</sub> — magnitude &amp; phase vs frequency</h2>
-    <div id="plot" style="width:100%;height:520px"></div>
   </div>
 
   <!-- ============================== ANSWER ============================== -->
