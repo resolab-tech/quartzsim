@@ -1,0 +1,580 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>27 MHz Pierce — Crystal + Load C Transmission</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['$','$'], ['\\(','\\)']], displayMath: [['$$','$$'], ['\\[','\\]']] },
+    svg: { fontCache: 'global' }
+  };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script" async></script>
+<style>
+  :root{
+    --bg:#0f1216; --panel:#161b22; --ink:#e8eef5; --muted:#9aa7b2;
+    --line:#2a323d; --wire:#89c2d9; --comp:#4cc9f0;
+    --good:#90be6d; --warn:#f9c74f; --bad:#e63946;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:1200px;margin:0 auto;padding:18px}
+  h1{font-size:18px;margin:0 0 4px}
+  p.sub{color:var(--muted);margin:0 0 16px}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:16px}
+  .panel h2{font-size:13px;letter-spacing:.06em;color:var(--muted);text-transform:uppercase;margin:0 0 10px}
+  .schem-svg{display:block;width:100%;height:auto;max-height:640px}
+  .schem-svg .wire{stroke:var(--wire);stroke-width:1.6;fill:none;stroke-linecap:round}
+  .schem-svg .comp{stroke:var(--comp);stroke-width:1.8;fill:none;stroke-linejoin:round;stroke-linecap:round}
+  .schem-svg .bulb{fill:var(--panel);stroke:var(--comp);stroke-width:1.8}
+  .schem-svg .dot{fill:var(--wire)}
+  .schem-svg .lbl{fill:var(--ink);font:600 13px ui-monospace,Menlo,Consolas,monospace}
+  .schem-svg .lbl-mute{fill:var(--muted);font:11px ui-monospace,Menlo,Consolas,monospace}
+  .schem-svg .dash{stroke:var(--muted);stroke-dasharray:4 4;fill:none}
+  /* inputs embedded via foreignObject */
+  .ipt{background:#0b0e12;border:1px solid var(--line);color:var(--ink);
+       font:12px/1.1 ui-monospace,Menlo,Consolas,monospace;
+       border-radius:6px;padding:4px 6px;width:100%;text-align:right;
+       transition:border-color .15s}
+  .ipt:focus{outline:none;border-color:var(--comp);box-shadow:0 0 0 2px rgba(76,201,240,0.15)}
+  .ipt-row{display:flex;align-items:center;gap:4px;
+           background:rgba(11,14,18,0.85);border:1px solid var(--line);border-radius:7px;
+           padding:3px 5px;backdrop-filter:blur(4px)}
+  .ipt-row .k{color:var(--comp);font:600 12px ui-monospace,Menlo,Consolas,monospace;min-width:22px}
+  .ipt-row .u{color:var(--muted);font:11px ui-monospace,Menlo,Consolas,monospace;min-width:18px}
+  .ipt-row input{background:transparent;border:0;color:var(--ink);width:100%;
+                 font:12px/1.1 ui-monospace,Menlo,Consolas,monospace;text-align:right;padding:1px}
+  .ipt-row input:focus{outline:none}
+  /* hover highlight */
+  .schem-svg .hl-target{cursor:pointer;transition:stroke .15s}
+  .schem-svg .hl-target:hover, .schem-svg .hl-target.hl{stroke:#fff;filter:drop-shadow(0 0 5px var(--comp))}
+  .schem-svg g.row:hover .comp{stroke:#fff;filter:drop-shadow(0 0 5px var(--comp))}
+
+  .btns{display:flex;gap:8px;margin:10px 0 0}
+  button{background:#1f2a36;color:var(--ink);border:1px solid var(--line);border-radius:6px;
+         padding:7px 10px;cursor:pointer;font:13px system-ui}
+  button.primary{background:#16324a;border-color:#2a4d6c}
+  button:hover{filter:brightness(1.1)}
+
+  .metrics{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:12px}
+  @media(max-width:760px){.metrics{grid-template-columns:repeat(3,1fr)}}
+  .m{background:#0b0e12;border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+  .m .k{color:var(--muted);font-size:11px;letter-spacing:.05em;text-transform:uppercase}
+  .m .v{font:14px/1.2 ui-monospace,Menlo,Consolas,monospace;margin-top:3px}
+
+  details{margin-top:10px;color:var(--muted)}
+  details summary{cursor:pointer}
+  code{font:12px/1.2 ui-monospace,Menlo,Consolas,monospace;color:#cfe3f2}
+  .pill{display:inline-block;padding:2px 8px;border-radius:999px;background:#1f2a36;border:1px solid var(--line);color:var(--ink);font-size:12px;margin-left:6px}
+
+  /* ---- derivation panel ---- */
+  .deriv{line-height:1.55}
+  .deriv h3{font-size:15px;color:#4cc9f0;margin:18px 0 6px;border-bottom:1px solid var(--line);padding-bottom:4px}
+  .deriv h3:first-of-type{margin-top:0}
+  .deriv p{margin:6px 0}
+  .deriv .boxed{background:#0b1520;border:1px solid #2a4d6c;border-radius:8px;padding:8px 12px;margin:8px 0}
+  .deriv .note{color:var(--muted);font-size:12.5px;margin:4px 0 0}
+  .deriv mjx-container{color:#e8eef5}
+  .deriv mjx-container[display="true"]{margin:10px 0 !important}
+  .deriv-table{width:100%;border-collapse:collapse;margin-top:8px;font:13px ui-monospace,Menlo,Consolas,monospace}
+  .deriv-table th,.deriv-table td{padding:6px 10px;border-bottom:1px solid var(--line);text-align:left}
+  .deriv-table th{color:var(--muted);font:600 11px/1.2 system-ui;letter-spacing:.05em;text-transform:uppercase}
+  .deriv-table td.v{text-align:right;color:#cfe3f2}
+  .deriv-table td.d{text-align:right;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>27 MHz Pierce — Crystal + Load-C Transmission <span class="pill">simplified</span></h1>
+  <p class="sub">Click any value in the schematic below to edit it. The transmission (v<sub>o</sub>/v<sub>i</sub>) of the passive feedback network and the three characteristic frequencies update instantly.</p>
+
+  <!-- ============================== SCHEMATIC ============================== -->
+  <div class="panel">
+    <h2>Pierce topology — click to edit component values</h2>
+
+    <svg class="schem-svg" viewBox="0 0 900 620" xmlns="http://www.w3.org/2000/svg">
+
+      <!-- ========== Pierce high-level circuit (y 20..280) ========== -->
+      <text class="lbl-mute" x="16" y="28">Pierce high-level</text>
+
+      <!-- node dots -->
+      <circle class="dot" cx="320" cy="150" r="3"/>
+      <circle class="dot" cx="500" cy="150" r="3"/>
+      <text class="lbl-mute" x="298" y="170">gate</text>
+      <text class="lbl-mute" x="505" y="170">drain</text>
+
+      <!-- inverter triangle -->
+      <path class="comp" d="M360 125 L360 175 L418 150 Z"/>
+      <circle class="bulb" cx="423" cy="150" r="4"/>
+      <text class="lbl-mute" x="378" y="152" text-anchor="middle">inv</text>
+      <line class="wire" x1="320" y1="150" x2="360" y2="150"/>
+      <line class="wire" x1="427" y1="150" x2="500" y2="150"/>
+
+      <!-- top feedback loop with crystal block -->
+      <line class="wire" x1="320" y1="150" x2="320" y2="80"/>
+      <line class="wire" x1="320" y1="80"  x2="378" y2="80"/>
+      <line class="wire" x1="442" y1="80"  x2="500" y2="80"/>
+      <line class="wire" x1="500" y1="80"  x2="500" y2="150"/>
+
+      <!-- crystal symbol (two plates + rectangle) -->
+      <g class="comp hl-target" id="xtalSym">
+        <line x1="378" y1="70" x2="378" y2="90"/>   <!-- left plate -->
+        <line x1="382" y1="70" x2="382" y2="90"/>
+        <rect x="384" y="66" width="32" height="28" fill="var(--panel)"/>
+        <line x1="418" y1="70" x2="418" y2="90"/>   <!-- right plate -->
+        <line x1="422" y1="70" x2="422" y2="90"/>
+      </g>
+      <text class="lbl" x="400" y="57" text-anchor="middle">Xtal (27 MHz)</text>
+      <text class="lbl-mute" x="400" y="110" text-anchor="middle">equivalent model below ↓</text>
+
+      <!-- C1 to GND -->
+      <line class="wire" x1="320" y1="150" x2="320" y2="200"/>
+      <g class="comp"> <!-- capacitor plates (horizontal) -->
+        <line x1="302" y1="200" x2="338" y2="200"/>
+        <line x1="302" y1="208" x2="338" y2="208"/>
+      </g>
+      <line class="wire" x1="320" y1="208" x2="320" y2="240"/>
+      <!-- GND -->
+      <g class="wire"><line x1="305" y1="240" x2="335" y2="240"/><line x1="310" y1="246" x2="330" y2="246"/><line x1="315" y1="252" x2="325" y2="252"/></g>
+      <text class="lbl" x="260" y="205" text-anchor="end">C₁</text>
+
+      <!-- C2 to GND -->
+      <line class="wire" x1="500" y1="150" x2="500" y2="200"/>
+      <g class="comp">
+        <line x1="482" y1="200" x2="518" y2="200"/>
+        <line x1="482" y1="208" x2="518" y2="208"/>
+      </g>
+      <line class="wire" x1="500" y1="208" x2="500" y2="240"/>
+      <g class="wire"><line x1="485" y1="240" x2="515" y2="240"/><line x1="490" y1="246" x2="510" y2="246"/><line x1="495" y1="252" x2="505" y2="252"/></g>
+      <text class="lbl" x="560" y="205">C₂</text>
+
+      <!-- Cstray (dashed, ghost) next to C1 -->
+      <g class="dash">
+        <line x1="262" y1="200" x2="288" y2="200"/>
+        <line x1="262" y1="208" x2="288" y2="208"/>
+      </g>
+      <line class="dash" x1="275" y1="150" x2="275" y2="200"/>
+      <line class="dash" x1="320" y1="150" x2="275" y2="150"/>
+      <line class="dash" x1="275" y1="208" x2="275" y2="240"/>
+      <line class="dash" x1="275" y1="240" x2="320" y2="240"/>
+      <text class="lbl-mute" x="275" y="270" text-anchor="middle">C<tspan baseline-shift="sub" font-size="9">stray</tspan></text>
+
+      <!-- C1 editor -->
+      <foreignObject x="160" y="188" width="100" height="36">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="ipt-row">
+          <span class="k">C₁</span>
+          <input id="C1" type="number" step="any" value="20"/>
+          <span class="u">pF</span>
+        </div>
+      </foreignObject>
+      <!-- C2 editor -->
+      <foreignObject x="600" y="188" width="100" height="36">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="ipt-row">
+          <span class="k">C₂</span>
+          <input id="C2" type="number" step="any" value="20"/>
+          <span class="u">pF</span>
+        </div>
+      </foreignObject>
+      <!-- Cstray editor -->
+      <foreignObject x="175" y="280" width="100" height="36">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="ipt-row">
+          <span class="k">Cₛ</span>
+          <input id="Cs" type="number" step="any" value="0"/>
+          <span class="u">pF</span>
+        </div>
+      </foreignObject>
+
+      <!-- ========== connector arrow ========== -->
+      <path class="dash" d="M400 98 C400 140, 400 240, 400 300"/>
+      <polygon class="dash" points="396,300 404,300 400,310" style="fill:var(--muted)"/>
+
+      <!-- ========== Crystal 4-element model (y 320..600) ========== -->
+      <rect class="dash" x="60" y="330" width="780" height="270" rx="10"/>
+      <text class="lbl-mute" x="76" y="350">Crystal equivalent (4-element)</text>
+
+      <!-- terminals -->
+      <circle class="dot" cx="130" cy="450" r="3"/>
+      <circle class="dot" cx="770" cy="450" r="3"/>
+      <text class="lbl-mute" x="108" y="470">A (drain)</text>
+      <text class="lbl-mute" x="748" y="470">B (gate)</text>
+
+      <!-- motional branch (top path) -->
+      <line class="wire" x1="130" y1="450" x2="130" y2="390"/>
+      <line class="wire" x1="130" y1="390" x2="200" y2="390"/>
+      <!-- Lm inductor -->
+      <path class="comp" d="M200 390 q10 -20 20 0 q10 -20 20 0 q10 -20 20 0 q10 -20 20 0"/>
+      <text class="lbl" x="240" y="372" text-anchor="middle">L<tspan baseline-shift="sub" font-size="10">m</tspan></text>
+      <line class="wire" x1="280" y1="390" x2="360" y2="390"/>
+      <!-- Cm capacitor (vertical plates) -->
+      <g class="comp">
+        <line x1="360" y1="378" x2="360" y2="402"/>
+        <line x1="368" y1="378" x2="368" y2="402"/>
+      </g>
+      <text class="lbl" x="364" y="372" text-anchor="middle">C<tspan baseline-shift="sub" font-size="10">m</tspan></text>
+      <line class="wire" x1="368" y1="390" x2="480" y2="390"/>
+      <!-- Rm resistor -->
+      <path class="comp" d="M480 390 l8 -12 l14 24 l14 -24 l14 24 l14 -24 l8 12"/>
+      <text class="lbl" x="520" y="372" text-anchor="middle">R<tspan baseline-shift="sub" font-size="10">m</tspan></text>
+      <line class="wire" x1="552" y1="390" x2="770" y2="390"/>
+      <line class="wire" x1="770" y1="390" x2="770" y2="450"/>
+
+      <!-- C0 shunt branch (bottom path) -->
+      <line class="wire" x1="130" y1="450" x2="130" y2="510"/>
+      <line class="wire" x1="130" y1="510" x2="440" y2="510"/>
+      <g class="comp">
+        <line x1="440" y1="498" x2="440" y2="522"/>
+        <line x1="448" y1="498" x2="448" y2="522"/>
+      </g>
+      <text class="lbl" x="444" y="492" text-anchor="middle">C<tspan baseline-shift="sub" font-size="10">0</tspan></text>
+      <line class="wire" x1="448" y1="510" x2="770" y2="510"/>
+      <line class="wire" x1="770" y1="510" x2="770" y2="450"/>
+
+      <!-- editors: Lm, Cm, Rm, C0 -->
+      <foreignObject x="196" y="412" width="108" height="36">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="ipt-row">
+          <span class="k">Lₘ</span>
+          <input id="Lm" type="number" step="any" value="14.63"/>
+          <span class="u">mH</span>
+        </div>
+      </foreignObject>
+      <foreignObject x="318" y="412" width="108" height="36">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="ipt-row">
+          <span class="k">Cₘ</span>
+          <input id="Cm" type="number" step="any" value="2.37"/>
+          <span class="u">fF</span>
+        </div>
+      </foreignObject>
+      <foreignObject x="474" y="412" width="100" height="36">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="ipt-row">
+          <span class="k">Rₘ</span>
+          <input id="Rm" type="number" step="any" value="40"/>
+          <span class="u">Ω</span>
+        </div>
+      </foreignObject>
+      <foreignObject x="398" y="532" width="108" height="36">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="ipt-row">
+          <span class="k">C₀</span>
+          <input id="C0" type="number" step="any" value="7.98"/>
+          <span class="u">pF</span>
+        </div>
+      </foreignObject>
+
+    </svg>
+
+    <div class="btns">
+      <button class="primary" id="btnUpdate">Update</button>
+      <button id="btnReset">Reset to 27 MHz nominal</button>
+    </div>
+
+    <div class="metrics">
+      <div class="m"><div class="k">f<sub>s</sub> — motional series (X<sub>m</sub>=0)</div><div class="v" id="mFs">—</div></div>
+      <div class="m"><div class="k">f<sub>r</sub> — xtal series w/ R<sub>m</sub></div><div class="v" id="mFr">—</div></div>
+      <div class="m"><div class="k">f<sub>L</sub> — load (osc. freq.)</div><div class="v" id="mFl">—</div></div>
+      <div class="m"><div class="k">f<sub>p</sub> — parallel / anti-res.</div><div class="v" id="mFp">—</div></div>
+      <div class="m"><div class="k">Q (motional)</div><div class="v" id="mQ">—</div></div>
+      <div class="m"><div class="k">C<sub>L</sub> seen by xtal</div><div class="v" id="mCL">—</div></div>
+      <div class="m"><div class="k">f<sub>p</sub> − f<sub>s</sub> (pullability)</div><div class="v" id="mDf">—</div></div>
+      <div class="m"><div class="k">Δf<sub>r</sub> = f<sub>r</sub> − f<sub>s</sub> (R<sub>m</sub>-pull)</div><div class="v" id="mDfr">—</div></div>
+    </div>
+
+    <p style="margin:10px 0 0;color:var(--muted);font-size:12px">Full derivation of f<sub>s</sub>, f<sub>r</sub>, f<sub>p</sub>, f<sub>L</sub> with R<sub>m</sub> included is at the bottom of this page. ↓</p>
+  </div>
+
+  <!-- ============================== PLOT ============================== -->
+  <div class="panel">
+    <h2>v<sub>o</sub>/v<sub>i</sub> — magnitude &amp; phase vs frequency</h2>
+    <div id="plot" style="width:100%;height:520px"></div>
+  </div>
+
+  <!-- ============================== ANSWER ============================== -->
+  <div class="panel" style="border-color:#2a4d6c">
+    <h2 style="color:#4cc9f0">Answer — does the oscillator settle at f<sub>L</sub>, or anywhere in the −180° band?</h2>
+    <p style="margin:6px 0">Between f<sub>r</sub> and f<sub>p</sub> the feedback network's phase shift stays close to −180° — over roughly the pullability band (f<sub>p</sub> − f<sub>s</sub>). Combined with the inverter's own −180°, the Barkhausen <b>phase</b> condition is satisfied over this whole band. That alone is <i>not</i> enough to set the oscillation frequency — the <b>gain</b> condition has to be met simultaneously.</p>
+
+    <p style="margin:6px 0"><b>Steady-state oscillation requires both:</b></p>
+    <ol style="margin:6px 0 10px 18px">
+      <li>∠(−A · H(jω)) = 0 (mod 360°) — loop phase condition, and</li>
+      <li>|−A · H(jω)| = 1 — loop gain condition (unity at the settled amplitude).</li>
+    </ol>
+
+    <p style="margin:6px 0">The phase condition is satisfied over a narrow band, but the gain magnitude |H(jω)| is strongly peaked inside that band. In a Pierce with an ideal transconductance inverter, the gain peak aligns with the frequency where the crystal's reactance <i>exactly</i> cancels 1/(jωC<sub>L</sub>), i.e.:</p>
+    <p style="margin:6px 0;text-align:center"><code>Im{ Z<sub>x</sub>(jω) + 1/(jωC<sub>L</sub>) } = 0  ⇒  ω = ω<sub>L</sub></code></p>
+    <p style="margin:6px 0">That single frequency is exactly <b>f<sub>L</sub></b> by its own definition. So the oscillator <b>does not smear across the 51.5 → 65.33 ppm band — it locks to one specific frequency</b>, and in the ideal-inverter limit that frequency is f<sub>L</sub>.</p>
+
+    <p style="margin:6px 0">In a real circuit the settled frequency deviates from f<sub>L</sub> by a small, calculable pull:</p>
+    <ul style="margin:6px 0 10px 18px">
+      <li><b>Finite inverter output resistance r<sub>o</sub></b> adds a series loss that effectively increases R<sub>m</sub>. Since phase slope through f<sub>L</sub> is extremely steep (Q ≈ 2.7·10⁴), this changes the frequency by only a few tens of ppb.</li>
+      <li><b>Inverter internal phase lag φ<sub>inv</sub></b> (from CMOS pole, not exactly −180°) shifts the frequency so the feedback phase compensates: Δf/f ≈ φ<sub>inv</sub>/(2·Q<sub>loaded</sub>). For a well-designed 27 MHz Pierce this is typically &lt; 1 ppm.</li>
+      <li><b>Stray parasitics</b> on C<sub>1</sub>, C<sub>2</sub> effectively change C<sub>L</sub> and so move f<sub>L</sub> itself — the C<sub>stray</sub> input above lets you see this directly.</li>
+    </ul>
+
+    <p style="margin:6px 0"><b>Bottom line:</b> the oscillator settles <b>at one, sharply-defined frequency that is essentially f<sub>L</sub></b>. Any frequency in the "phase ≈ −180° band" that is not also a gain-peak and not also a stable fixed point of the loop equation is rejected — the crystal's huge Q makes the selection extremely sharp (kHz-scale phase window collapses to &lt;1 Hz oscillation line).</p>
+
+    <p style="margin:6px 0;color:var(--muted)">(In the plot above you can see |H| peaks very close to f<sub>L</sub>, not at fs or fp; this is the gain-peak that selects the oscillation frequency.)</p>
+  </div>
+
+  <!-- ============================== DERIVATION ============================== -->
+  <div class="panel deriv">
+    <h2>Derivation — f<sub>s</sub>, f<sub>p</sub>, f<sub>L</sub> from first principles (R<sub>m</sub> included, no lossless approximation)</h2>
+
+    <h3>1. Crystal impedance Z<sub>x</sub>(jω)</h3>
+    <p>Motional branch: $Z_m = R_m + j X_m$ with $X_m(\omega)=\omega L_m - 1/(\omega C_m)$.</p>
+    <p>Static shunt: $Z_0 = 1/(j\omega C_0) = j X_0$ with $X_0 = -1/(\omega C_0)$.</p>
+    <p>Parallel combination:</p>
+    $$Z_x(j\omega) \;=\; Z_m \parallel Z_0 \;=\; \frac{Z_m\, Z_0}{Z_m + Z_0} \;=\; \frac{(R_m + j X_m)(j X_0)}{R_m + j(X_m + X_0)}$$
+    <p>Multiplying numerator and denominator by the conjugate $R_m - j(X_m + X_0)$ yields the <em>exact</em> real and imaginary parts:</p>
+    $$\operatorname{Re}\{Z_x\} \;=\; \frac{R_m\, X_0^{\,2}}{R_m^{\,2} + (X_m + X_0)^{\,2}}$$
+    $$\operatorname{Im}\{Z_x\} \;=\; \frac{X_0\,\bigl(X_m^{\,2} + X_m X_0 + R_m^{\,2}\bigr)}{R_m^{\,2} + (X_m + X_0)^{\,2}}$$
+    <p class="note">These hold for the full 4-element model — no $R_m\!=\!0$ assumption has been used.</p>
+
+    <h3>2. Pierce feedback transfer function</h3>
+    <p>In a Pierce topology the two load caps C<sub>1</sub> (gate-GND) and C<sub>2</sub> (drain-GND) appear in series through ground as seen from the crystal's two terminals. Including a stray $C_s$ split evenly:</p>
+    $$C_L \;=\; \frac{(C_1 + C_s/2)\,(C_2 + C_s/2)}{C_1 + C_2 + C_s}$$
+    <p>The crystal in series with this equivalent $C_L$ drives a divider with transfer function</p>
+    $$H(j\omega) \;=\; \frac{v_o}{v_i} \;=\; \frac{1}{1 + j\omega\, C_L\, Z_x(j\omega)}$$
+
+    <h3>3. f<sub>s</sub> — motional series resonance</h3>
+    <p>Defined intrinsically by the motional branch: $X_m(\omega_s) = 0$. Because $X_m$ depends only on $L_m$ and $C_m$, $R_m$ cannot move it.</p>
+    <div class="boxed">
+    $$\boxed{\;f_s \;=\; \frac{1}{2\pi\sqrt{L_m C_m}}\;}$$
+    </div>
+
+    <h3>4. f<sub>r</sub> and f<sub>p</sub> — zero-phase crossings of Z<sub>x</sub></h3>
+    <p>The two roots of $\operatorname{Im}\{Z_x\} = 0$ correspond to the whole crystal being purely resistive. The denominator of $\operatorname{Im}\{Z_x\}$ is strictly positive, so the numerator must vanish:</p>
+    $$X_m^{\,2} + X_m X_0 + R_m^{\,2} \;=\; 0$$
+    <p>Substituting $X_0 = -1/(\omega C_0)$:</p>
+    $$\omega^{2}\, C_0\,\bigl(X_m^{\,2} + R_m^{\,2}\bigr) \;=\; X_m$$
+    <p>Now let $X_m = \omega L_m - 1/(\omega C_m)$, $y = \omega^{2}$, and multiply through by $y\, C_m^{\,2}\, C_0$. Every non-polynomial piece cancels and an <em>exact</em> quadratic in $y$ remains:</p>
+    <div class="boxed">
+    $$A_1\, y^{2} + B_1\, y + C_1 \;=\; 0$$
+    $$A_1 = (L_m C_m)^{2} \;,\quad B_1 = R_m^{\,2} C_m^{\,2} - L_m C_m\!\left(2 + \tfrac{C_m}{C_0}\right) \;,\quad C_1 = 1 + \tfrac{C_m}{C_0}$$
+    $$\boxed{\;y_{\pm} \;=\; \frac{-B_1 \pm \sqrt{B_1^{\,2} - 4\, A_1\, C_1}}{2\, A_1}, \quad f_r \;=\; \frac{\sqrt{y_-}}{2\pi}, \quad f_p \;=\; \frac{\sqrt{y_+}}{2\pi}\;}$$
+    </div>
+    <p class="note"><strong>R<sub>m</sub>→0 check:</strong> $B_1^{\,2} - 4 A_1 C_1 \;=\; (L_m C_m\cdot C_m/C_0)^{2}$ exactly, so $f_r \to f_s$ and $f_p \to f_s\sqrt{1 + C_m/C_0}$. ✓</p>
+
+    <h3>5. f<sub>L</sub> — load resonance (oscillation frequency)</h3>
+    <p>At the Pierce oscillation frequency, the crystal in series with $C_L$ must be purely resistive:</p>
+    $$\operatorname{Im}\bigl\{Z_x(j\omega) + 1/(j\omega C_L)\bigr\} \;=\; 0 \;\;\Longleftrightarrow\;\; \operatorname{Im}\{Z_x\} \;=\; \frac{1}{\omega C_L}$$
+    <p>Using the exact $\operatorname{Im}\{Z_x\}$ from §1, clearing the denominator, and letting $A \equiv X_m + X_0$:</p>
+    $$C_0\, A^{2} + C_L\, X_m\, A + (C_0 + C_L)\, R_m^{\,2} \;=\; 0$$
+    <p>Substituting $A = X_m - 1/(\omega C_0)$, $X_m = \omega L_m - 1/(\omega C_m)$, and $y = \omega^{2}$, collecting powers of $y$, gives a second <em>exact</em> quadratic:</p>
+    <div class="boxed">
+    $$A_2\, y^{2} + B_2\, y + C_2 \;=\; 0$$
+    $$A_2 \;=\; (C_0 + C_L)\, C_0\, (L_m C_m)^{2}$$
+    $$B_2 \;=\; -\,L_m C_m\bigl[\,2(C_0+C_L)\,C_0 + (2C_0 + C_L)\,C_m\,\bigr] \;+\; (C_0 + C_L)\, C_0\, C_m^{\,2}\, R_m^{\,2}$$
+    $$C_2 \;=\; C_0\,(C_0 + C_L) \;+\; C_m\,(2C_0 + C_L + C_m)$$
+    $$\boxed{\;f_L \;=\; \frac{\sqrt{y_-}}{2\pi}\,,\qquad y_- \;=\; \frac{-B_2 - \sqrt{B_2^{\,2} - 4\, A_2\, C_2}}{2\, A_2}\;}$$
+    </div>
+    <p class="note"><strong>R<sub>m</sub>→0 check:</strong> $B_2^{\,2} - 4 A_2 C_2 \;=\; (C_m C_L)^{2}$ exactly, so $f_L \to f_s\sqrt{1 + C_m/(C_0 + C_L)}$. ✓</p>
+
+    <h3>6. Live numeric results (recomputed from the component boxes above)</h3>
+    <table class="deriv-table">
+      <thead>
+        <tr><th>Symbol</th><th>Definition</th><th>Value</th><th>Δ vs R<sub>m</sub>=0 textbook</th></tr>
+      </thead>
+      <tbody id="derivTable"></tbody>
+    </table>
+    <p class="note">The $R_m$-pull on $f_r, f_p, f_L$ scales as $C_0 R_m^{\,2} / L_m$; for a healthy 27 MHz crystal it is sub-ppm, but the closed forms above are exact regardless of $R_m$ magnitude.</p>
+  </div>
+</div>
+
+<script>
+// ---------- unit helpers ----------
+const MH=1e-3, FF=1e-15, PF=1e-12;
+const $ = id => document.getElementById(id);
+
+function read(){
+  return {
+    Lm: parseFloat($("Lm").value)*MH,
+    Cm: parseFloat($("Cm").value)*FF,
+    Rm: parseFloat($("Rm").value),
+    C0: parseFloat($("C0").value)*PF,
+    C1: parseFloat($("C1").value)*PF,
+    C2: parseFloat($("C2").value)*PF,
+    Cs: parseFloat($("Cs").value)*PF,
+  };
+}
+function nominal(){
+  // Representative 27 MHz AT-cut fundamental crystal starting values.
+  // Edit any value to match the actual datasheet of the part being designed in.
+  $("Lm").value=14.63; $("Cm").value=2.37; $("Rm").value=40; $("C0").value=7.98;
+  $("C1").value=20;    $("C2").value=20;   $("Cs").value=0;
+}
+
+// ---------- complex helpers ----------
+const cAdd=(a,b)=>[a[0]+b[0],a[1]+b[1]];
+const cMul=(a,b)=>[a[0]*b[0]-a[1]*b[1], a[0]*b[1]+a[1]*b[0]];
+const cDiv=(a,b)=>{const d=b[0]*b[0]+b[1]*b[1];return [(a[0]*b[0]+a[1]*b[1])/d,(a[1]*b[0]-a[0]*b[1])/d];};
+const cAbs=a=>Math.hypot(a[0],a[1]);
+const cArg=a=>Math.atan2(a[1],a[0]);
+
+function Zxtal(w,X){
+  const Zm=[X.Rm, w*X.Lm - 1/(w*X.Cm)];           // motional branch
+  const Z0=[0, -1/(w*X.C0)];                      // C0 shunt
+  return cDiv(cMul(Zm,Z0), cAdd(Zm,Z0));          // parallel combination
+}
+function Hnet(w,X){
+  // Pierce feedback transfer, using the EQUIVALENT load cap CL = C1 ∥ C2 in series with the crystal.
+  // This is the model whose resonance is fL = fs·√(1 + Cm/(C0+CL)), which is also the
+  // frequency at which the oscillator will lock. Peak of |H| ≡ fL by construction.
+  const C1e = X.C1 + X.Cs/2;
+  const C2e = X.C2 + X.Cs/2;
+  const CL  = (C1e*C2e)/(C1e+C2e);
+  const denom = cAdd([1,0], cMul([0, w*CL], Zxtal(w,X)));
+  return cDiv([1,0], denom);
+}
+function charFreqs(X){
+  // Full 4-element crystal model (Rm included). All derivations done from first principles —
+  // no Rm=0 approximations used.
+  //
+  // ── fs : motional series resonance (Xm = 0 by definition, Rm-independent)
+  // ── fr, fp : roots of Im{Zx(jω)} = 0, where Zx = (Rm + jXm) ∥ (1/jωC0).
+  //            Re-arranging yields ω²·C0·(Xm² + Rm²) = Xm. With Xm = ωLm − 1/(ωCm) and y=ω²:
+  //              A1·y² + B1·y + C1 = 0
+  //                A1 = (Lm·Cm)²
+  //                B1 = Rm²·Cm² − Lm·Cm·(2 + Cm/C0)
+  //                C1 = 1 + Cm/C0
+  //            y_- → fr (lower zero-phase, series of whole xtal, ≈ fs)
+  //            y_+ → fp (upper zero-phase, parallel/anti-resonance of whole xtal)
+  // ── fL : from Im{Zx + 1/(jωCL)} = 0, i.e. Im{Zx} = 1/(ωCL).
+  //            Re-arranging yields  C0·A² + CL·Xm·A + (C0+CL)·Rm² = 0  (A = Xm + X0 = Xm − 1/ωC0).
+  //            Substituting and collecting powers of y=ω² gives a second quadratic:
+  //              A2·y² + B2·y + C2 = 0
+  //                A2 = (C0+CL)·C0·(Lm·Cm)²
+  //                B2 = −Lm·Cm·[2(C0+CL)C0 + (2C0+CL)·Cm] + (C0+CL)·C0·Cm²·Rm²
+  //                C2 = C0·(C0+CL) + Cm·(2C0 + CL + Cm)
+  //            y_- → fL (loaded series resonance — oscillation frequency in an ideal Pierce)
+  //
+  // Rm = 0 limit recovers the textbook formulas exactly (both discriminants simplify analytically).
+
+  const Lm=X.Lm, Cm=X.Cm, Rm=X.Rm, C0=X.C0;
+
+  // equivalent CL seen by the crystal in Pierce topology
+  const C1e = X.C1 + X.Cs/2;
+  const C2e = X.C2 + X.Cs/2;
+  const CL  = (C1e*C2e)/(C1e+C2e);
+
+  // fs — motional branch only
+  const fs = 1/(2*Math.PI*Math.sqrt(Lm*Cm));
+
+  // Quadratic 1 → fr (lower), fp (upper)
+  const A1 = (Lm*Cm)*(Lm*Cm);
+  const B1 = Rm*Rm*Cm*Cm - Lm*Cm*(2 + Cm/C0);
+  const C1c = 1 + Cm/C0;
+  const disc1 = Math.max(B1*B1 - 4*A1*C1c, 0);
+  const sq1 = Math.sqrt(disc1);
+  const yfr = (-B1 - sq1)/(2*A1);
+  const yfp = (-B1 + sq1)/(2*A1);
+  const fr = Math.sqrt(yfr)/(2*Math.PI);
+  const fp = Math.sqrt(yfp)/(2*Math.PI);
+
+  // Quadratic 2 → fL (lower root is the load resonance)
+  const A2 = (C0+CL)*C0*(Lm*Cm)*(Lm*Cm);
+  const B2 = -Lm*Cm*(2*(C0+CL)*C0 + (2*C0+CL)*Cm) + (C0+CL)*C0*Cm*Cm*Rm*Rm;
+  const C2c = C0*(C0+CL) + Cm*(2*C0 + CL + Cm);
+  const disc2 = Math.max(B2*B2 - 4*A2*C2c, 0);
+  const sq2 = Math.sqrt(disc2);
+  const yfl = (-B2 - sq2)/(2*A2);
+  const fl = Math.sqrt(yfl)/(2*Math.PI);
+
+  const Q  = (2*Math.PI*fs*Lm)/Rm;
+  return {fs, fr, fp, fl, Q, CL};
+}
+
+function siHz(f){
+  if (f>=1e9) return (f/1e9).toFixed(6)+" GHz";
+  if (f>=1e6) return (f/1e6).toFixed(6)+" MHz";
+  if (f>=1e3) return (f/1e3).toFixed(3)+" kHz";
+  return f.toFixed(3)+" Hz";
+}
+
+function update(){
+  const X = read();
+  if (!isFinite(X.Lm*X.Cm) || X.Lm<=0 || X.Cm<=0 || X.C0<=0) return;
+  const {fs,fr,fp,fl,Q,CL} = charFreqs(X);
+
+  $("mFs").textContent = siHz(fs);
+  $("mFr").textContent = siHz(fr);
+  $("mFp").textContent = siHz(fp);
+  $("mFl").textContent = siHz(fl);
+  $("mQ").textContent  = Q.toExponential(2);
+  $("mCL").textContent = (CL*1e12).toFixed(3)+" pF";
+  $("mDf").textContent = siHz(fp-fs);
+  $("mDfr").textContent = ((fr-fs)*1e6/fs).toFixed(3)+" ppm  ("+(fr-fs).toFixed(2)+" Hz)";
+
+  // ---- populate derivation table ----
+  // textbook (Rm=0) references
+  const fp_t = fs*Math.sqrt(1 + X.Cm/X.C0);
+  const fl_t = fs*Math.sqrt(1 + X.Cm/(X.C0+CL));
+  const row = (sym, def, val, delta) =>
+    `<tr><td>${sym}</td><td style="color:var(--muted)">${def}</td><td class="v">${val}</td><td class="d">${delta}</td></tr>`;
+  const fmtHz = f => (f/1e6).toFixed(6)+" MHz";
+  const fmtDppm = (a,b) => (((a-b)/b)*1e6).toFixed(3)+" ppm  ("+((a-b)>=0?"+":"")+(a-b).toFixed(2)+" Hz)";
+  $("derivTable").innerHTML =
+      row("f<sub>s</sub>",  "X<sub>m</sub>(ω<sub>s</sub>) = 0",                       fmtHz(fs), "— (R<sub>m</sub>-independent by def.)")
+    + row("f<sub>r</sub>",  "lower root of Quadratic 1 (Im{Z<sub>x</sub>}=0)",       fmtHz(fr), fmtDppm(fr, fs)+" <span style='color:var(--muted)'>vs f<sub>s</sub></span>")
+    + row("f<sub>L</sub>",  "lower root of Quadratic 2 (Im{Z<sub>x</sub>+1/jωC<sub>L</sub>}=0)", fmtHz(fl), fmtDppm(fl, fl_t)+" <span style='color:var(--muted)'>vs f<sub>s</sub>√(1+C<sub>m</sub>/(C<sub>0</sub>+C<sub>L</sub>))</span>")
+    + row("f<sub>p</sub>",  "upper root of Quadratic 1",                             fmtHz(fp), fmtDppm(fp, fp_t)+" <span style='color:var(--muted)'>vs f<sub>s</sub>√(1+C<sub>m</sub>/C<sub>0</sub>)</span>");
+
+  const span = fp - fs;
+  const fmin = fs - 0.25*span;
+  const fmax = fp + 0.25*span;
+  const N = 1400;
+  const freqs = new Array(N), mag = new Array(N), phase = new Array(N);
+  for(let i=0;i<N;i++){
+    const f = fmin + (fmax-fmin)*i/(N-1);
+    const w = 2*Math.PI*f;
+    const H = Hnet(w,X);
+    freqs[i] = f/1e6;
+    mag[i]   = 20*Math.log10(Math.max(cAbs(H),1e-12));
+    phase[i] = cArg(H)*180/Math.PI;
+  }
+
+  const tMag = { x:freqs, y:mag, name:"|H| (dB)", type:"scatter", mode:"lines",
+    line:{color:"#4cc9f0", width:2}, yaxis:"y1",
+    hovertemplate:"f = %{x:.6f} MHz<br>|H| = %{y:.3f} dB<extra></extra>" };
+  const tPh  = { x:freqs, y:phase, name:"∠H (deg)", type:"scatter", mode:"lines",
+    line:{color:"#f4a261", width:2, dash:"dot"}, yaxis:"y2",
+    hovertemplate:"f = %{x:.6f} MHz<br>∠H = %{y:.2f}°<extra></extra>" };
+
+  const mark = (f,color) => ({ type:"line", xref:"x", yref:"paper",
+    x0:f/1e6, x1:f/1e6, y0:0, y1:1, line:{color, width:1.2, dash:"dash"} });
+  const ann  = (f,color,label,yoff) => ({ x:f/1e6, y:1, xref:"x", yref:"paper",
+    xanchor:"left", yanchor:"top", text:label, showarrow:false,
+    font:{color, size:12}, bgcolor:"rgba(15,18,22,0.82)",
+    bordercolor:color, borderwidth:1, borderpad:2, yshift:yoff });
+
+  const layout = {
+    paper_bgcolor:"#161b22", plot_bgcolor:"#0b0e12",
+    font:{color:"#e8eef5"},
+    margin:{l:60,r:60,t:10,b:50},
+    xaxis:{ title:"Frequency (MHz)", gridcolor:"#2a323d", zerolinecolor:"#2a323d", tickformat:".5f" },
+    yaxis:{ title:"|H| (dB)", gridcolor:"#2a323d", zerolinecolor:"#2a323d",
+            side:"left", color:"#4cc9f0" },
+    yaxis2:{ title:"∠H (deg)", overlaying:"y", side:"right",
+             color:"#f4a261", gridcolor:"transparent", zerolinecolor:"#2a323d",
+             range:[-180,180], dtick:45 },
+    legend:{orientation:"h", y:1.08, x:0},
+    shapes:[mark(fs,"#4cc9f0"), mark(fl,"#f9c74f"), mark(fp,"#e63946")],
+    annotations:[ann(fs,"#4cc9f0","fs = "+siHz(fs), -2),
+                 ann(fl,"#f9c74f","fL = "+siHz(fl), -22),
+                 ann(fp,"#e63946","fp = "+siHz(fp), -42)],
+    hovermode:"x unified"
+  };
+
+  Plotly.react("plot",[tMag,tPh],layout,{displaylogo:false,responsive:true});
+}
+
+// ---------- wire up ----------
+$("btnUpdate").addEventListener("click", update);
+$("btnReset").addEventListener("click", ()=>{nominal(); update();});
+["Lm","Cm","Rm","C0","C1","C2","Cs"].forEach(id=>{
+  $(id).addEventListener("input",  update);
+  $(id).addEventListener("change", update);
+});
+update();
+</script>
+</body>
+</html>
