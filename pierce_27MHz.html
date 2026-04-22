@@ -14,16 +14,17 @@
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script" async></script>
 <style>
   :root{
-    --bg:#0f1216; --panel:#161b22; --ink:#e8eef5; --muted:#9aa7b2;
-    --line:#2a323d; --wire:#89c2d9; --comp:#4cc9f0;
-    --good:#90be6d; --warn:#f9c74f; --bad:#e63946;
+    --bg:#eef2f6; --panel:#ffffff; --ink:#1f2937; --muted:#6b7280;
+    --line:#d1d9e0; --wire:#0e7490; --comp:#0369a1;
+    --good:#16a34a; --warn:#ca8a04; --bad:#dc2626;
+    --accent-soft:#eff6ff; --input-bg:#f9fafb;
   }
   *{box-sizing:border-box}
   html,body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
   .wrap{max-width:1200px;margin:0 auto;padding:18px}
   h1{font-size:18px;margin:0 0 4px}
   p.sub{color:var(--muted);margin:0 0 16px}
-  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:16px}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:16px;box-shadow:0 1px 2px rgba(0,0,0,0.04)}
   .panel h2{font-size:13px;letter-spacing:.06em;color:var(--muted);text-transform:uppercase;margin:0 0 10px}
   .schem-svg{display:block;width:100%;height:auto;max-height:640px}
   .schem-svg .wire{stroke:var(--wire);stroke-width:1.6;fill:none;stroke-linecap:round}
@@ -34,13 +35,13 @@
   .schem-svg .lbl-mute{fill:var(--muted);font:11px ui-monospace,Menlo,Consolas,monospace}
   .schem-svg .dash{stroke:var(--muted);stroke-dasharray:4 4;fill:none}
   /* inputs embedded via foreignObject */
-  .ipt{background:#0b0e12;border:1px solid var(--line);color:var(--ink);
+  .ipt{background:var(--input-bg);border:1px solid var(--line);color:var(--ink);
        font:12px/1.1 ui-monospace,Menlo,Consolas,monospace;
        border-radius:6px;padding:4px 6px;width:100%;text-align:right;
        transition:border-color .15s}
-  .ipt:focus{outline:none;border-color:var(--comp);box-shadow:0 0 0 2px rgba(76,201,240,0.15)}
+  .ipt:focus{outline:none;border-color:var(--comp);box-shadow:0 0 0 2px rgba(3,105,161,0.18)}
   .ipt-row{display:flex;align-items:center;gap:4px;
-           background:rgba(11,14,18,0.85);border:1px solid var(--line);border-radius:7px;
+           background:rgba(255,255,255,0.95);border:1px solid var(--line);border-radius:7px;
            padding:3px 5px;backdrop-filter:blur(4px)}
   .ipt-row .k{color:var(--comp);font:600 12px ui-monospace,Menlo,Consolas,monospace;min-width:22px}
   .ipt-row .u{color:var(--muted);font:11px ui-monospace,Menlo,Consolas,monospace;min-width:18px}
@@ -49,39 +50,40 @@
   .ipt-row input:focus{outline:none}
   /* hover highlight */
   .schem-svg .hl-target{cursor:pointer;transition:stroke .15s}
-  .schem-svg .hl-target:hover, .schem-svg .hl-target.hl{stroke:#fff;filter:drop-shadow(0 0 5px var(--comp))}
-  .schem-svg g.row:hover .comp{stroke:#fff;filter:drop-shadow(0 0 5px var(--comp))}
+  .schem-svg .hl-target:hover, .schem-svg .hl-target.hl{stroke:var(--bad);filter:drop-shadow(0 0 5px var(--comp))}
+  .schem-svg g.row:hover .comp{stroke:var(--bad);filter:drop-shadow(0 0 5px var(--comp))}
 
   .btns{display:flex;gap:8px;margin:10px 0 0}
-  button{background:#1f2a36;color:var(--ink);border:1px solid var(--line);border-radius:6px;
+  button{background:#ffffff;color:var(--ink);border:1px solid var(--line);border-radius:6px;
          padding:7px 10px;cursor:pointer;font:13px system-ui}
-  button.primary{background:#16324a;border-color:#2a4d6c}
-  button:hover{filter:brightness(1.1)}
+  button.primary{background:var(--comp);border-color:var(--comp);color:#fff}
+  button:hover{filter:brightness(0.97)}
+  button.primary:hover{filter:brightness(1.08)}
 
   .metrics{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:12px}
   @media(max-width:760px){.metrics{grid-template-columns:repeat(3,1fr)}}
-  .m{background:#0b0e12;border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+  .m{background:var(--input-bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
   .m .k{color:var(--muted);font-size:11px;letter-spacing:.05em;text-transform:uppercase}
-  .m .v{font:14px/1.2 ui-monospace,Menlo,Consolas,monospace;margin-top:3px}
+  .m .v{font:14px/1.2 ui-monospace,Menlo,Consolas,monospace;margin-top:3px;color:var(--ink)}
 
   details{margin-top:10px;color:var(--muted)}
   details summary{cursor:pointer}
-  code{font:12px/1.2 ui-monospace,Menlo,Consolas,monospace;color:#cfe3f2}
-  .pill{display:inline-block;padding:2px 8px;border-radius:999px;background:#1f2a36;border:1px solid var(--line);color:var(--ink);font-size:12px;margin-left:6px}
+  code{font:12px/1.2 ui-monospace,Menlo,Consolas,monospace;color:#0f172a;background:#f1f5f9;padding:1px 4px;border-radius:3px}
+  .pill{display:inline-block;padding:2px 8px;border-radius:999px;background:var(--accent-soft);border:1px solid #bfdbfe;color:var(--comp);font-size:12px;margin-left:6px}
 
   /* ---- derivation panel ---- */
   .deriv{line-height:1.55}
-  .deriv h3{font-size:15px;color:#4cc9f0;margin:18px 0 6px;border-bottom:1px solid var(--line);padding-bottom:4px}
+  .deriv h3{font-size:15px;color:var(--comp);margin:18px 0 6px;border-bottom:1px solid var(--line);padding-bottom:4px}
   .deriv h3:first-of-type{margin-top:0}
   .deriv p{margin:6px 0}
-  .deriv .boxed{background:#0b1520;border:1px solid #2a4d6c;border-radius:8px;padding:8px 12px;margin:8px 0}
+  .deriv .boxed{background:var(--accent-soft);border:1px solid #bfdbfe;border-radius:8px;padding:8px 12px;margin:8px 0}
   .deriv .note{color:var(--muted);font-size:12.5px;margin:4px 0 0}
-  .deriv mjx-container{color:#e8eef5}
+  .deriv mjx-container{color:var(--ink)}
   .deriv mjx-container[display="true"]{margin:10px 0 !important}
   .deriv-table{width:100%;border-collapse:collapse;margin-top:8px;font:13px ui-monospace,Menlo,Consolas,monospace}
   .deriv-table th,.deriv-table td{padding:6px 10px;border-bottom:1px solid var(--line);text-align:left}
   .deriv-table th{color:var(--muted);font:600 11px/1.2 system-ui;letter-spacing:.05em;text-transform:uppercase}
-  .deriv-table td.v{text-align:right;color:#cfe3f2}
+  .deriv-table td.v{text-align:right;color:var(--ink)}
   .deriv-table td.d{text-align:right;color:var(--muted)}
 </style>
 </head>
@@ -289,8 +291,8 @@
   </div>
 
   <!-- ============================== ANSWER ============================== -->
-  <div class="panel" style="border-color:#2a4d6c">
-    <h2 style="color:#4cc9f0">Answer — does the oscillator settle at f<sub>L</sub>, or anywhere in the −180° band?</h2>
+  <div class="panel" style="border-color:#bfdbfe;background:var(--accent-soft)">
+    <h2 style="color:var(--comp)">Answer — does the oscillator settle at f<sub>L</sub>, or anywhere in the −180° band?</h2>
     <p style="margin:6px 0">Between f<sub>r</sub> and f<sub>p</sub> the feedback network's phase shift stays close to −180° — over roughly the pullability band (f<sub>p</sub> − f<sub>s</sub>). Combined with the inverter's own −180°, the Barkhausen <b>phase</b> condition is satisfied over this whole band. That alone is <i>not</i> enough to set the oscillation frequency — the <b>gain</b> condition has to be met simultaneously.</p>
 
     <p style="margin:6px 0"><b>Steady-state oscillation requires both:</b></p>
@@ -532,35 +534,42 @@ function update(){
     phase[i] = cArg(H)*180/Math.PI;
   }
 
+  const COL = { fs:"#0369a1", fr:"#16a34a", fl:"#d97706", fp:"#dc2626",
+                mag:"#0369a1", phase:"#c2410c" };
+
   const tMag = { x:freqs, y:mag, name:"|H| (dB)", type:"scatter", mode:"lines",
-    line:{color:"#4cc9f0", width:2}, yaxis:"y1",
+    line:{color:COL.mag, width:2}, yaxis:"y1",
     hovertemplate:"f = %{x:.6f} MHz<br>|H| = %{y:.3f} dB<extra></extra>" };
   const tPh  = { x:freqs, y:phase, name:"∠H (deg)", type:"scatter", mode:"lines",
-    line:{color:"#f4a261", width:2, dash:"dot"}, yaxis:"y2",
+    line:{color:COL.phase, width:2, dash:"dot"}, yaxis:"y2",
     hovertemplate:"f = %{x:.6f} MHz<br>∠H = %{y:.2f}°<extra></extra>" };
 
-  const mark = (f,color) => ({ type:"line", xref:"x", yref:"paper",
-    x0:f/1e6, x1:f/1e6, y0:0, y1:1, line:{color, width:1.2, dash:"dash"} });
+  const mark = (f,color,dash="dash") => ({ type:"line", xref:"x", yref:"paper",
+    x0:f/1e6, x1:f/1e6, y0:0, y1:1, line:{color, width:1.2, dash} });
   const ann  = (f,color,label,yoff) => ({ x:f/1e6, y:1, xref:"x", yref:"paper",
     xanchor:"left", yanchor:"top", text:label, showarrow:false,
-    font:{color, size:12}, bgcolor:"rgba(15,18,22,0.82)",
+    font:{color, size:12}, bgcolor:"rgba(255,255,255,0.94)",
     bordercolor:color, borderwidth:1, borderpad:2, yshift:yoff });
 
   const layout = {
-    paper_bgcolor:"#161b22", plot_bgcolor:"#0b0e12",
-    font:{color:"#e8eef5"},
+    paper_bgcolor:"#ffffff", plot_bgcolor:"#ffffff",
+    font:{color:"#1f2937"},
     margin:{l:60,r:60,t:10,b:50},
-    xaxis:{ title:"Frequency (MHz)", gridcolor:"#2a323d", zerolinecolor:"#2a323d", tickformat:".5f" },
-    yaxis:{ title:"|H| (dB)", gridcolor:"#2a323d", zerolinecolor:"#2a323d",
-            side:"left", color:"#4cc9f0" },
+    xaxis:{ title:"Frequency (MHz)", gridcolor:"#e5e7eb", zerolinecolor:"#d1d5db", tickformat:".5f" },
+    yaxis:{ title:"|H| (dB)", gridcolor:"#e5e7eb", zerolinecolor:"#d1d5db",
+            side:"left", color:COL.mag },
     yaxis2:{ title:"∠H (deg)", overlaying:"y", side:"right",
-             color:"#f4a261", gridcolor:"transparent", zerolinecolor:"#2a323d",
+             color:COL.phase, gridcolor:"transparent", zerolinecolor:"#d1d5db",
              range:[-180,180], dtick:45 },
-    legend:{orientation:"h", y:1.08, x:0},
-    shapes:[mark(fs,"#4cc9f0"), mark(fl,"#f9c74f"), mark(fp,"#e63946")],
-    annotations:[ann(fs,"#4cc9f0","fs = "+siHz(fs), -2),
-                 ann(fl,"#f9c74f","fL = "+siHz(fl), -22),
-                 ann(fp,"#e63946","fp = "+siHz(fp), -42)],
+    legend:{orientation:"h", y:1.08, x:0, bgcolor:"rgba(255,255,255,0.9)"},
+    shapes:[ mark(fs,COL.fs),
+             mark(fr,COL.fr,"dot"),
+             mark(fl,COL.fl),
+             mark(fp,COL.fp) ],
+    annotations:[ ann(fs,COL.fs,"fs = "+siHz(fs), -2),
+                  ann(fr,COL.fr,"fr = "+siHz(fr), -22),
+                  ann(fl,COL.fl,"fL = "+siHz(fl), -42),
+                  ann(fp,COL.fp,"fp = "+siHz(fp), -62) ],
     hovermode:"x unified"
   };
 
